@@ -1,0 +1,8 @@
+import sys
+
+
+f = open(sys.argv[1])
+for line in f:
+    words = line.split()
+    print max(words, key=len)
+f.close()
