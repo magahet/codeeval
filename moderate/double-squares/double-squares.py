@@ -3,13 +3,13 @@
 import sys
 
 
-def gen_primes():
+def gen_primes(maxn):
     blue_primes = []
     red_primes = []
     i = 0
     p = 0
 
-    while p <= 46340:
+    while p <= int(maxn ** 0.5):
         p = 4 * i + 3
         blue_primes.append(p)
         p = 4 * (i + 1) + 1
@@ -19,35 +19,43 @@ def gen_primes():
 
 
 def r2(current):
-    blue_prime_count = 0
     for prime in blue_primes:
+        blue_prime_count = 0
         while current and current % prime == 0:
             current /= prime
             blue_prime_count += 1
-        if current < prime ** 2:
+        if blue_prime_count % 2 != 0:
+            return 0
+        if current < prime:
             break
-    if blue_prime_count % 2 != 0:
-        return 0
+        
+    a0 = 0
+    while current and current % 2 == 0:
+        current /= 2
+        a0 += 1
 
-    r2 = 4
+    b = 1
     for prime in red_primes:
         tr = 0
         while current and current % prime == 0:
             current /= prime
             tr += 1
-        r2 *= tr + 1
-        if current < prime ** 2:
+        b *= tr + 1
+        if current < prime:
             break
 
-    if r2 % 8 == 0:
-        return r2 / 8
+    if b == 1:
+        return 0
+    elif b % 2 == 0:
+        return b / 2
     else:
-        return (r2 / 8) + 1
+        return (b - (-1 ** a0)) / 2
 
-
-blue_primes, red_primes = gen_primes()
 
 with open(sys.argv[1]) as _file:
-    _file.readline()
-    for line in _file.readlines():
-        print r2(int(line))
+    n_list = [int(l) for l in _file.readlines()]
+    n_list.pop(0)
+    
+blue_primes, red_primes = gen_primes(max(n_list))
+for n in n_list:
+    print r2(n)
