@@ -5,7 +5,7 @@ import (
 	"fmt"
 	"os"
 	"path"
-	"unsafe"
+	"strconv"
 )
 
 func readLine(file *os.File) <-chan string {
@@ -39,17 +39,33 @@ func main() {
 	defer file.Close()
 
 	if err != nil {
-		fmt.Println("error opening file", os.Args[1], ":", err)
-		os.Exit(1)
+		fmt.Println("error opening file", os.Args[1], ":", err) os.Exit(1)
 	}
 
-	for line := range readLine(file) {
-		fmt.Println(line)
-	}
-
+    // prepopulate set of perfect squares up to limit
     perfectSquares := make(map[int]bool)
-	for i := 0; i <= 46340; i++ {
+	for i := 0; i <= 32767; i++ {
 	    perfectSquares[i*i] = true
 	}
-	fmt.Println(unsafe.Sizeof(perfectSquares))
+
+    var N int
+	for line := range readLine(file) {
+	    if N == 0 {
+	        N, _ = strconv.Atoi(line)
+	        continue
+	    }
+
+	    X, _ := strconv.Atoi(line)
+	    count := 0
+	    // iterate int combinations
+	    for i := 0; i <= X/2; i++ {
+	        _, e1 := perfectSquares[i]
+	        _, e2 := perfectSquares[X-i]
+	        // test if both ints are in perfect squares set
+	        if e1 && e2 {
+	            count++
+	        }
+	    }
+	    fmt.Println(count)
+	}
 }
