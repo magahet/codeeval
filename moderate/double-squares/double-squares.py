@@ -6,9 +6,11 @@ from fractions import gcd
 
 
 def get_prime_factor(N):
-    '''Pollard'''
+    '''Pollard Rho Algorithm'''
+    if N == 1:
+        return 1
     if N % 2 == 0:
-            return 2
+        return 2
     x = random.randint(1, N - 1)
     y = x
     c = random.randint(1, N - 1)
@@ -20,65 +22,59 @@ def get_prime_factor(N):
             g = gcd(abs(x - y), N)
     return g
 
-
-def is_prime(n, k=10):
-    '''Miller-Rabin'''
-    if n == 2 or n == 3:
-        return True
-    if not n & 1:
-        return False
-
-    def check(a, s, d, n):
-        x = pow(a, d, n)
-        if x == 1:
-            return True
-        for i in xrange(s - 1):
-            if x == n - 1:
-                return True
-            x = pow(x, 2, n)
-        return x == n - 1
-
-    s = 0
-    d = n - 1
-
-    while d % 2 == 0:
-        d >>= 1
-        s += 1
-
-    for i in xrange(k):
-        a = random.randrange(2, n - 1)
-        if not check(a, s, d, n):
+ 
+def is_prime(n):
+    '''Deterministic Miller-Rabin. Adapted from implementation on Rosetta Code'''
+    
+    def _try_composite(a, d, n, s):
+        if pow(a, d, n) == 1:
             return False
-    return True
+        for i in range(s):
+            if pow(a, 2**i * d, n) == n-1:
+                return False
+        return True # n  is definitely composite
+    
+    if n in (1, 2, 3):
+        return True
+    d, s = n - 1, 0
+    while not d % 2:
+        d, s = d >> 1, s + 1
+    # Returns exact according to http://primes.utm.edu/prove/prove2_3.html
+    if n < 1373653: 
+        return not any(_try_composite(a, d, n, s) for a in (2, 3))
+    if n < 25326001: 
+        return not any(_try_composite(a, d, n, s) for a in (2, 3, 5))
+    if n < 118670087467: 
+        if n == 3215031751: 
+            return False
+        return not any(_try_composite(a, d, n, s) for a in (2, 3, 5, 7))
+    raise Exception('N is too large')
 
 
 def r2(current):
+    if current in (0, 1):
+        return 1
     a0 = 0
     blue_prime_count = 0
-    b = 1
-
+    b = 0
     while current > 1:
         prime = get_prime_factor(current)
         if not is_prime(prime):
             continue
         count = 0
-        while current and current % prime == 0:
+        while current % prime == 0:
             count += 1
             current /= prime
-
         if prime == 2:
             a0 += count
-        elif (prime - 3) % 4 == 0:
-            blue_prime_count += count
-        else:
-            b *= count + 1
-
-    if blue_prime_count % 2 != 0:
-        return 0
+        elif (prime - 3) % 4 == 0 and count % 2 != 0:
+            return 0
+        elif (prime - 1) % 4 == 0:
+            b = b * (count + 1) if b else count + 1
     if b % 2 == 0:
         return b / 2
     else:
-        return (b - (-1 ** a0)) / 2
+        return (b - ((-1) ** a0)) / 2
 
 
 with open(sys.argv[1]) as _file:

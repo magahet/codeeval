@@ -5,6 +5,34 @@ import sys
 from fractions import gcd
 
 
+def is_prime(n):
+    '''Deterministic Miller-Rabin. Adapted from implementation on Rosetta Code'''
+    
+    def _try_composite(a, d, n, s):
+        if pow(a, d, n) == 1:
+            return False
+        for i in range(s):
+            if pow(a, 2**i * d, n) == n-1:
+                return False
+        return True # n  is definitely composite
+    
+    if n in (0, 1, 2, 3):
+        return True
+    d, s = n - 1, 0
+    while not d % 2:
+        d, s = d >> 1, s + 1
+    # Returns exact according to http://primes.utm.edu/prove/prove2_3.html
+    if n < 1373653: 
+        return not any(_try_composite(a, d, n, s) for a in (2, 3))
+    if n < 25326001: 
+        return not any(_try_composite(a, d, n, s) for a in (2, 3, 5))
+    if n < 118670087467: 
+        if n == 3215031751: 
+            return False
+        return not any(_try_composite(a, d, n, s) for a in (2, 3, 5, 7))
+    raise Exception('N is too large')
+
+
 def pollardRho(N):
         if N % 2 == 0:
                 return 2
@@ -48,4 +76,14 @@ def brent(N):
         return g
 
 
-print pollardRho(int(sys.argv[1]))
+n = int(sys.argv[1])
+
+while n > 1:
+    prime = pollardRho(n)
+    if not is_prime(prime):
+        continue
+    while n % prime == 0:
+        color = 'b' if (prime - 3) % 4 == 0 else 'r'
+        print prime, color
+        n /= prime
+    
