@@ -22,10 +22,10 @@ def get_prime_factor(N):
             g = gcd(abs(x - y), N)
     return g
 
- 
+
 def is_prime(n):
     '''Deterministic Miller-Rabin. Adapted from implementation on Rosetta Code'''
-    
+
     def _try_composite(a, d, n, s):
         if pow(a, d, n) == 1:
             return False
@@ -33,19 +33,19 @@ def is_prime(n):
             if pow(a, 2**i * d, n) == n-1:
                 return False
         return True # n  is definitely composite
-    
+
     if n in (1, 2, 3):
         return True
     d, s = n - 1, 0
     while not d % 2:
         d, s = d >> 1, s + 1
     # Returns exact according to http://primes.utm.edu/prove/prove2_3.html
-    if n < 1373653: 
+    if n < 1373653:
         return not any(_try_composite(a, d, n, s) for a in (2, 3))
-    if n < 25326001: 
+    if n < 25326001:
         return not any(_try_composite(a, d, n, s) for a in (2, 3, 5))
-    if n < 118670087467: 
-        if n == 3215031751: 
+    if n < 118670087467:
+        if n == 3215031751:
             return False
         return not any(_try_composite(a, d, n, s) for a in (2, 3, 5, 7))
     raise Exception('N is too large')
@@ -82,4 +82,5 @@ with open(sys.argv[1]) as _file:
     n_list.pop(0)
 
 for i, n in enumerate(n_list):
-    print r2(n)
+    #print r2(n)
+    print n, r2(n)

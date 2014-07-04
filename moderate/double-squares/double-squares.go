@@ -11,27 +11,43 @@ import (
 	"strconv"
 )
 
+func Abs(n int64) int64 {
+	if n < 0 {
+		return -n
+	} else {
+		return n
+	}
+}
+
 func findPrimeFactor(N int64) int {
+	fmt.Println(N)
 	if N == 1 {
 		return 1
 	} else if N%2 == 0 {
 		return 2
 	}
-	x := int64(rand.Int63n(N-2) + 1)
+	x := rand.Int63n(N-2) + 1
 	y := x
-	c := int64(rand.Int63n(N-2) + 1)
+	c := rand.Int63n(N-2) + 1
 	g := int64(1)
 	for g == 1 {
-		fmt.Print('.')
 		x = ((x*x)%N + c) % N
 		y = ((y*y)%N + c) % N
 		y = ((y*y)%N + c) % N
-		g = big.NewInt(0).GCD(nil, nil, big.NewInt(0).Sub(big.NewInt(x), big.NewInt(y)), big.NewInt(N)).Int64()
+		a := Abs(x - y)
+		if a == 0 {
+			g = N
+		} else {
+			g = big.NewInt(0).GCD(nil, nil, big.NewInt(Abs(x-y)), big.NewInt(N)).Int64()
+		}
+		//fmt.Printf("gcd: %v, %v, %v, %v\n", x, y, big.NewInt(N), g)
 	}
+	//fmt.Printf("g:%v ", g)
 	return int(g)
 }
 
 func compositeTest(a, d, n, s int64) bool {
+	//fmt.Printf("%v, %v, %v, %v\n", a, d, n, s)
 	if int64(math.Pow(float64(a), float64(d)))%n == 1 {
 		return false
 	}
@@ -52,7 +68,7 @@ func primeTest(n int64) bool {
 	s := int64(0)
 
 	for d%2 != 0 {
-		d = d >> 1
+		d /= 2
 		s++
 	}
 
@@ -85,9 +101,13 @@ func r2(current int) int {
 	b := 0
 
 	for current > 1 {
+		fmt.Println(current)
 		prime := findPrimeFactor(int64(current))
-		if primeTest(int64(prime)) == false {
-			continue
+		for i := 0; primeTest(int64(prime)) == false; i++ {
+			prime = findPrimeFactor(int64(current))
+			if i > 5 {
+				panic("could not find prime factor")
+			}
 		}
 
 		count := 0
@@ -109,6 +129,7 @@ func r2(current int) int {
 		}
 	}
 
+	//fmt.Printf("b")
 	if b%2 == 0 {
 		return b / 2
 	} else if a0%2 == 0 {
@@ -162,6 +183,6 @@ func main() {
 		}
 
 		X, _ := strconv.Atoi(line)
-		fmt.Println(r2(X))
+		fmt.Printf("%d, %d\n", X, r2(X))
 	}
 }
