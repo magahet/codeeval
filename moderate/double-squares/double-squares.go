@@ -3,8 +3,6 @@ package main
 import (
 	"bufio"
 	"fmt"
-	"math"
-	"math/big"
 	"math/rand"
 	"os"
 	"path"
@@ -19,80 +17,43 @@ func Abs(n int64) int64 {
 	}
 }
 
-func findPrimeFactor(N int64) int {
+func GCD(a, b uint32) uint32 {
+    if a == 0 {
+            return b
+    }
+    for b != 0 {
+            if a > b {
+                    a -= b
+            } else {
+                    b -= a
+            }
+    }
+    return a
+}
+
+func findPrimeFactor(N uint32) uint32 {
 	fmt.Println(N)
 	if N == 1 {
 		return 1
 	} else if N%2 == 0 {
 		return 2
 	}
-	x := rand.Int63n(N-2) + 1
+	x := rand.Uint32()%(N-2) + 1
 	y := x
-	c := rand.Int63n(N-2) + 1
-	g := int64(1)
+	c := rand.Uint32()%(N-2) + 1
+	g := uint32(1)
 	for g == 1 {
 		x = ((x*x)%N + c) % N
 		y = ((y*y)%N + c) % N
 		y = ((y*y)%N + c) % N
-		a := Abs(x - y)
-		if a == 0 {
-			g = N
-		} else {
-			g = big.NewInt(0).GCD(nil, nil, big.NewInt(Abs(x-y)), big.NewInt(N)).Int64()
-		}
+        g = GCD(Abs(x-y), N)
 		//fmt.Printf("gcd: %v, %v, %v, %v\n", x, y, big.NewInt(N), g)
 	}
 	//fmt.Printf("g:%v ", g)
-	return int(g)
+	return g
 }
 
-func compositeTest(a, d, n, s int64) bool {
-	//fmt.Printf("%v, %v, %v, %v\n", a, d, n, s)
-	if int64(math.Pow(float64(a), float64(d)))%n == 1 {
-		return false
-	}
-	for i := int64(0); i < s; i++ {
-		if int64(math.Pow(float64(a), math.Pow(2.0, float64(i*d))))%n == n-1 {
-			return false
-		}
-	}
-	return true // n  is definitely composite
-}
-
-func primeTest(n int64) bool {
-	if n >= 1 && n <= 3 {
-		return true
-	}
-
-	d := n - 1
-	s := int64(0)
-
-	for d%2 != 0 {
-		d /= 2
-		s++
-	}
-
-	var a []int64
-	if n < 1373653 {
-		a = []int64{2, 3}
-	} else if n < 25326001 {
-		a = []int64{2, 3, 5}
-	} else if n == 3215031751 {
-		return false
-	} else if n < 118670087467 {
-		a = []int64{2, 3, 5, 7}
-	}
-
-	for _, a_i := range a {
-		if compositeTest(a_i, d, n, s) {
-			return false
-		}
-	}
-
-	return true
-}
-
-func r2(current int) int {
+func r2(current uint32) int {
 	if current == 0 || current == 1 {
 		return 1
 	}
@@ -102,9 +63,9 @@ func r2(current int) int {
 
 	for current > 1 {
 		fmt.Println(current)
-		prime := findPrimeFactor(int64(current))
-		for i := 0; primeTest(int64(prime)) == false; i++ {
-			prime = findPrimeFactor(int64(current))
+		prime := findPrimeFactor(current)
+		for i := 0; big.NewInt(prime).ProbablyPrime(4) == false; i++ {
+			prime = findPrimeFactor(current)
 			if i > 5 {
 				panic("could not find prime factor")
 			}
@@ -182,7 +143,7 @@ func main() {
 			continue
 		}
 
-		X, _ := strconv.Atoi(line)
+		X, _ := strconv.ParseUint(line, 10, 32)
 		fmt.Printf("%d, %d\n", X, r2(X))
 	}
 }
