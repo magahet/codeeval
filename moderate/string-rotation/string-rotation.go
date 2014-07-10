@@ -5,34 +5,25 @@ import (
 	"fmt"
 	"os"
 	"path"
-	"strconv"
 	"strings"
 )
 
 func processLine(line string) string {
-	parts := strings.Split(line, ";")
-	swapCount, _ := strconv.Atoi(parts[1])
-	buffer := make([]string, swapCount)
-	nums := strings.Split(parts[0], ",")
-	remainingStart := (len(nums) / swapCount) * swapCount
-	result := ""
+	parts := strings.Split(line, ",")
+	a := parts[0]
+	b := parts[1]
 
-	for i, num := range nums {
-		buffer[i%swapCount] = num
-		if (i+1)%swapCount == 0 {
-			for j := 1; j <= swapCount; j++ {
-				result += fmt.Sprintf("%s,", buffer[swapCount-j])
-			}
-		} else if i == remainingStart {
-			break
+	if len(a) != len(b) {
+		return "False"
+	}
+
+	for i := 0; i < len(a); i++ {
+		if a == b[i:]+b[:i] {
+			return "True"
 		}
 	}
 
-	for i := remainingStart; i < len(nums); i++ {
-		result += fmt.Sprintf("%s,", nums[i])
-	}
-
-	return strings.Trim(result, ",")
+	return "False"
 }
 
 func readLine(file *os.File) <-chan string {
@@ -72,7 +63,6 @@ func main() {
 
 	for line := range readLine(file) {
 		if line != "" {
-			//fmt.Println(line)
 			fmt.Println(processLine(line))
 		}
 	}

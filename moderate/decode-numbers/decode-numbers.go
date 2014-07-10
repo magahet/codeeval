@@ -5,34 +5,35 @@ import (
 	"fmt"
 	"os"
 	"path"
-	"strconv"
 	"strings"
 )
 
-func processLine(line string) string {
-	parts := strings.Split(line, ";")
-	swapCount, _ := strconv.Atoi(parts[1])
-	buffer := make([]string, swapCount)
-	nums := strings.Split(parts[0], ",")
-	remainingStart := (len(nums) / swapCount) * swapCount
-	result := ""
-
-	for i, num := range nums {
-		buffer[i%swapCount] = num
-		if (i+1)%swapCount == 0 {
-			for j := 1; j <= swapCount; j++ {
-				result += fmt.Sprintf("%s,", buffer[swapCount-j])
+func countPermutaions(line string) int {
+	l := len(line)
+	count := 0
+	for i, char := range line {
+		if char == '1' && i+1 < l {
+			count += countPermutaions(line[i+1:])
+			if i+2 < l {
+				count += countPermutaions(line[i+2:])
+			} else {
+				count++
 			}
-		} else if i == remainingStart {
-			break
+			return count
+		} else if char == '2' && i+1 < l {
+			if strings.ContainsAny(string(line[i+1]), "0123456") == false {
+				continue
+			}
+			count += countPermutaions(line[i+1:])
+			if i+2 < l {
+				count += countPermutaions(line[i+2:])
+			} else {
+				count++
+			}
+			return count
 		}
 	}
-
-	for i := remainingStart; i < len(nums); i++ {
-		result += fmt.Sprintf("%s,", nums[i])
-	}
-
-	return strings.Trim(result, ",")
+	return 1
 }
 
 func readLine(file *os.File) <-chan string {
@@ -72,8 +73,7 @@ func main() {
 
 	for line := range readLine(file) {
 		if line != "" {
-			//fmt.Println(line)
-			fmt.Println(processLine(line))
+			fmt.Println(countPermutaions(line))
 		}
 	}
 }

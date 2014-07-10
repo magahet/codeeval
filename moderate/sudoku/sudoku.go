@@ -9,30 +9,63 @@ import (
 	"strings"
 )
 
+func Cmp(set, set2 map[int]bool) bool {
+	if len(set) != len(set2) {
+		return false
+	}
+	for k := range set {
+		_, ok := set2[k]
+		if !ok {
+			return false
+		}
+	}
+	return true
+}
+
 func processLine(line string) string {
 	parts := strings.Split(line, ";")
-	swapCount, _ := strconv.Atoi(parts[1])
-	buffer := make([]string, swapCount)
-	nums := strings.Split(parts[0], ",")
-	remainingStart := (len(nums) / swapCount) * swapCount
-	result := ""
+	n, _ := strconv.Atoi(parts[0])
+	nums := strings.Split(parts[1], ",")
 
-	for i, num := range nums {
-		buffer[i%swapCount] = num
-		if (i+1)%swapCount == 0 {
-			for j := 1; j <= swapCount; j++ {
-				result += fmt.Sprintf("%s,", buffer[swapCount-j])
-			}
-		} else if i == remainingStart {
-			break
+	// create validation set
+	valSet := make(map[string]bool)
+	for i := 0; i < n; i++ {
+		valSet[strconv.Itoa(i)] = true
+	}
+
+	// check rows
+	for i := 0; i < n; i++ {
+		set = make(map[string]bool)
+		for j := 0; j < n; j++ {
+			set[i+j*n] = true
+		}
+		if !Cmp(set, valSet) {
+			return false
 		}
 	}
 
-	for i := remainingStart; i < len(nums); i++ {
-		result += fmt.Sprintf("%s,", nums[i])
+	// check cols
+	for i := 0; i < n; i++ {
+		set = make(map[string]bool)
+		for j := 0; j < n; j++ {
+			set[i*n+j] = true
+		}
+		if !Cmp(set, valSet) {
+			return false
+		}
 	}
 
-	return strings.Trim(result, ",")
+	// check boxes
+	for i := 0; i < n; i++ {
+		set = make(map[string]bool)
+		for j := 0; j < n; j++ {
+			set[i*n+j] = true
+		}
+		if !Cmp(set, valSet) {
+			return false
+		}
+	}
+
 }
 
 func readLine(file *os.File) <-chan string {
@@ -72,7 +105,6 @@ func main() {
 
 	for line := range readLine(file) {
 		if line != "" {
-			//fmt.Println(line)
 			fmt.Println(processLine(line))
 		}
 	}

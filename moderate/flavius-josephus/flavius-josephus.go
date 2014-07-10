@@ -2,6 +2,7 @@ package main
 
 import (
 	"bufio"
+	"container/ring"
 	"fmt"
 	"os"
 	"path"
@@ -10,29 +11,26 @@ import (
 )
 
 func processLine(line string) string {
-	parts := strings.Split(line, ";")
-	swapCount, _ := strconv.Atoi(parts[1])
-	buffer := make([]string, swapCount)
-	nums := strings.Split(parts[0], ",")
-	remainingStart := (len(nums) / swapCount) * swapCount
+	parts := strings.Split(line, ",")
+	population, _ := strconv.Atoi(parts[0])
+	step, _ := strconv.Atoi(parts[1])
+	r := ring.New(population)
 	result := ""
 
-	for i, num := range nums {
-		buffer[i%swapCount] = num
-		if (i+1)%swapCount == 0 {
-			for j := 1; j <= swapCount; j++ {
-				result += fmt.Sprintf("%s,", buffer[swapCount-j])
-			}
-		} else if i == remainingStart {
-			break
-		}
+	for i := 0; i < r.Len(); i++ {
+		r.Value = i
+		r = r.Next()
+	}
+	r = r.Prev()
+
+	for r.Len() > 1 {
+		r = r.Move(step - 1)
+		result += fmt.Sprintf("%d ", r.Unlink(1).Value)
 	}
 
-	for i := remainingStart; i < len(nums); i++ {
-		result += fmt.Sprintf("%s,", nums[i])
-	}
+	result += fmt.Sprintf("%d ", r.Value)
 
-	return strings.Trim(result, ",")
+	return strings.Trim(result, " ")
 }
 
 func readLine(file *os.File) <-chan string {
@@ -72,7 +70,6 @@ func main() {
 
 	for line := range readLine(file) {
 		if line != "" {
-			//fmt.Println(line)
 			fmt.Println(processLine(line))
 		}
 	}

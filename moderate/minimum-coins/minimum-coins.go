@@ -6,33 +6,21 @@ import (
 	"os"
 	"path"
 	"strconv"
-	"strings"
 )
 
-func processLine(line string) string {
-	parts := strings.Split(line, ";")
-	swapCount, _ := strconv.Atoi(parts[1])
-	buffer := make([]string, swapCount)
-	nums := strings.Split(parts[0], ",")
-	remainingStart := (len(nums) / swapCount) * swapCount
-	result := ""
+func processLine(line string) int {
+	num, _ := strconv.Atoi(line)
+	count := 0
+	values := []int{5, 3, 1}
 
-	for i, num := range nums {
-		buffer[i%swapCount] = num
-		if (i+1)%swapCount == 0 {
-			for j := 1; j <= swapCount; j++ {
-				result += fmt.Sprintf("%s,", buffer[swapCount-j])
-			}
-		} else if i == remainingStart {
-			break
+	for _, v := range values {
+		for num >= v {
+			count++
+			num -= v
 		}
 	}
 
-	for i := remainingStart; i < len(nums); i++ {
-		result += fmt.Sprintf("%s,", nums[i])
-	}
-
-	return strings.Trim(result, ",")
+	return count
 }
 
 func readLine(file *os.File) <-chan string {
@@ -71,9 +59,6 @@ func main() {
 	}
 
 	for line := range readLine(file) {
-		if line != "" {
-			//fmt.Println(line)
-			fmt.Println(processLine(line))
-		}
+		fmt.Println(processLine(line))
 	}
 }
