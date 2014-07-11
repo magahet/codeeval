@@ -27,9 +27,7 @@ func combinations(iterable []int, r int) <-chan []int {
 	c := make(chan []int)
 	go func(c chan []int) {
 		defer close(c)
-		rr := make([]int, len(result))
-		copy(result, rr)
-		c <- rr
+		c <- result
 		var m, maxVal int
 		for i := 1; i < int(new(big.Int).Binomial(int64(n), int64(r)).Int64()); i++ {
 			m = r - 1
@@ -42,13 +40,11 @@ func combinations(iterable []int, r int) <-chan []int {
 			for j := m + 1; j < r; j++ {
 				indices[j] = indices[j-1] + 1
 			}
-			c <- indices
+			result := make([]int, r)
 			for ii, el := range indices {
 				result[ii] = pool[el]
 			}
-			rr := make([]int, len(result))
-			copy(result, rr)
-			c <- rr
+			c <- result
 		}
 	}(c)
 
@@ -69,9 +65,9 @@ func processLine(line string) (count int) {
 	for i, numStr := range numStrs {
 		nums[i], _ = strconv.Atoi(numStr)
 	}
-	fmt.Println(nums)
+	//fmt.Println(nums)
 	for set := range combinations(nums, 4) {
-		fmt.Println(set)
+		//fmt.Println(set)
 		if sum(set) == 0 {
 			count++
 		}
