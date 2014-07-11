@@ -9,7 +9,7 @@ import (
 	"strings"
 )
 
-func Cmp(set, set2 map[int]bool) bool {
+func Cmp(set, set2 map[string]bool) bool {
 	if len(set) != len(set2) {
 		return false
 	}
@@ -22,6 +22,15 @@ func Cmp(set, set2 map[int]bool) bool {
 	return true
 }
 
+func sqrt(n int) int {
+    for i := 0; i*i <= n; i++ {
+        if i*i == n {
+            return i
+        }
+    }
+    return -1
+}
+
 func processLine(line string) string {
 	parts := strings.Split(line, ";")
 	n, _ := strconv.Atoi(parts[0])
@@ -30,17 +39,18 @@ func processLine(line string) string {
 	// create validation set
 	valSet := make(map[string]bool)
 	for i := 0; i < n; i++ {
-		valSet[strconv.Itoa(i)] = true
+		valSet[strconv.Itoa(i+1)] = true
 	}
 
+    var set map[string]bool
 	// check rows
 	for i := 0; i < n; i++ {
 		set = make(map[string]bool)
 		for j := 0; j < n; j++ {
-			set[i+j*n] = true
+			set[nums[i+j*n]] = true
 		}
 		if !Cmp(set, valSet) {
-			return false
+			return "False"
 		}
 	}
 
@@ -48,24 +58,32 @@ func processLine(line string) string {
 	for i := 0; i < n; i++ {
 		set = make(map[string]bool)
 		for j := 0; j < n; j++ {
-			set[i*n+j] = true
+			set[nums[i*n+j]] = true
 		}
 		if !Cmp(set, valSet) {
-			return false
+			return "False"
 		}
 	}
 
 	// check boxes
-	for i := 0; i < n; i++ {
-		set = make(map[string]bool)
-		for j := 0; j < n; j++ {
-			set[i*n+j] = true
-		}
-		if !Cmp(set, valSet) {
-			return false
+	for i := 0; i < sqrt(n); i++ {
+		for j := 0; j < sqrt(n); j++ {
+    		set = make(map[string]bool)
+		    for k := 0; k < sqrt(n); k++ {
+    		    for l := 0; l < sqrt(n); l++ {
+    		        //fmt.Printf("%d,", i*n*sqrt(n) + j*sqrt(n) + k*n + l)
+    			    set[nums[i*n*sqrt(n) + j*sqrt(n) + k*n + l]] = true
+    		    }
+		    }
+		    //fmt.Printf("%v\n", set)
+    		if !Cmp(set, valSet) {
+    		    //fmt.Println("%v", set)
+    			return "False"
+    		}
 		}
 	}
 
+    return "True"
 }
 
 func readLine(file *os.File) <-chan string {
