@@ -29,19 +29,19 @@ func combinations(iterable []int, r int) <-chan []int {
 		defer close(c)
 		c <- result
 		var m, maxVal int
-		for i := 2; i <= int(new(big.Int).Binomial(int64(n), int64(r)).Int64()); i++ {
+		for i := 1; i < int(new(big.Int).Binomial(int64(n), int64(r)).Int64()); i++ {
 			m = r - 1
 			maxVal = n - 1
 			for indices[m] == maxVal {
 				m--
 				maxVal--
 			}
-			indices[r-1]++
-			for j := m; j < r; j++ {
+			indices[m]++
+			for j := m + 1; j < r; j++ {
 				indices[j] = indices[j-1] + 1
 			}
-			for i, el := range indices {
-				result[i] = pool[el]
+			for ii, el := range indices {
+				result[ii] = pool[el]
 			}
 			c <- result
 		}
