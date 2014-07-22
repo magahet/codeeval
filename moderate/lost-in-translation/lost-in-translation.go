@@ -8,28 +8,10 @@ import (
 	"strings"
 )
 
+var r = strings.NewReplacer("a", "y", "b", "h", "c", "e", "d", "s", "e", "o", "f", "c", "g", "v", "h", "x", "i", "d", "j", "u", "k", "i", "l", "g", "m", "l", "n", "b", "o", "k", "p", "r", "q", "z", "r", "t", "s", "n", "t", "w", "u", "j", "v", "p", "w", "f", "x", "m", "y", "a", "z", "q")
+
 func processLine(line string) string {
-	linkStr := strings.Split(line, ";")
-	links := make(map[string]string)
-	for _, str := range linkStr {
-		parts := strings.Split(str, "-")
-		links[parts[0]] = parts[1]
-	}
-
-	current := "BEGIN"
-	var ok bool
-	for i := 0; i < len(links); i++ {
-		current, ok = links[current]
-		if ok == false {
-			return "BAD"
-		}
-	}
-
-	if current != "END" {
-		return "BAD"
-	}
-
-	return "GOOD"
+	return r.Replace(line)
 }
 
 func readLine(file *os.File) <-chan string {

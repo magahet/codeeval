@@ -5,31 +5,30 @@ import (
 	"fmt"
 	"os"
 	"path"
+	"strconv"
 	"strings"
 )
 
-func processLine(line string) string {
-	linkStr := strings.Split(line, ";")
-	links := make(map[string]string)
-	for _, str := range linkStr {
-		parts := strings.Split(str, "-")
-		links[parts[0]] = parts[1]
-	}
+var r = strings.NewReplacer("0", "1", "1", "2", "2", "0")
 
-	current := "BEGIN"
-	var ok bool
-	for i := 0; i < len(links); i++ {
-		current, ok = links[current]
-		if ok == false {
-			return "BAD"
-		}
-	}
+func genPhrase(line string) string {
+	return line + r.Replace(line)
+}
 
-	if current != "END" {
-		return "BAD"
+func nearestPower2(n int) int {
+	p := 1
+	for p <= n {
+		p *= 2
 	}
+	return p / 2
+}
 
-	return "GOOD"
+func processLine(b string, n int) string {
+	n -= nearestPower2(n)
+	if n == 0 {
+		return r.Replace(b)
+	}
+	return processLine(r.Replace(b), n)
 }
 
 func readLine(file *os.File) <-chan string {
@@ -69,7 +68,12 @@ func main() {
 
 	for line := range readLine(file) {
 		if line != "" {
-			fmt.Println(processLine(line))
+			n, _ := strconv.Atoi(line)
+			if n == 0 {
+				fmt.Println("0")
+			} else {
+				fmt.Println(processLine("0", n))
+			}
 		}
 	}
 }
