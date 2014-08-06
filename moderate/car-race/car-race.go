@@ -7,6 +7,7 @@ import (
 	"path"
 	"strconv"
 	"strings"
+	"sort"
 )
 
 type Track []Segment
@@ -34,40 +35,53 @@ func parseTrack(line string) Track {
 
 type Car struct {
 	Num int
-	A, D, Vmax float64
+	A, D, Vmax, Time float64
 }
 
+func (c Car) String() string {
+	return fmt.Sprintf("%d %.2f", c.Num, c.Time)
+}
+
+type ByTime []Car
+
+func (c ByTime) Len() int           { return len(c) }
+func (c ByTime) Swap(i, j int)      { c[i], c[j] = c[j], c[i] }
+func (c ByTime) Less(i, j int) bool { return c[i].Time < c[j].Time }
+
 func parseCars(lines []string) []Car {
-	cars := make([]Car, len(lines))
+	cars := make([]Car, 0)
 	var num int
 	var vMax, a, d float64
-	for i, line := range lines {
+	for _, line := range lines {
 		parts := strings.Fields(line)
+		if len(parts) < 4 {
+			continue
+		}
 		num, _ = strconv.Atoi(parts[0])
 		vMax, _ = strconv.ParseFloat(parts[1], 64)
+		vMax /= 3600.0
 		a, _ = strconv.ParseFloat(parts[2], 64)
 		d, _ = strconv.ParseFloat(parts[3], 64)
-		cars[i] = Car{num, a, d, vMax}
+		cars = append(cars, Car{num, vMax/a, vMax/d, vMax, 0.0})
 	}
+
 	return cars
 }
 
 func calcDistAndTime(v1, v2, a float64) (d, t float64) {
-	t := (v2 - v1) / a
-	d := (v1 + v2) * t / 2
+	t = (v2 - v1) / a
+	d = (v1 + v2) * t / 2
 	return
 }
 
 func timeCar(track Track, car Car) float64 {
-	var totalTime, v1, v2, segDist float64
+	var totalTime, segDist, t, d float64
 	for _, segment := range track {
 		segDist = segment.D
-		v1 = segment.V1 * car.Vmax
-		v2 = segment.V2 * car.Vmax
-		d, t := calcDistAndTime(v1, v2, car.A)
+		d, t = calcDistAndTime(segment.V1 * car.Vmax, car.Vmax, car.A)
 		totalTime += t
 		segDist -= d
-		d, t := calcDistAndTime(v1, v2, car.D)
+		d, t = calcDistAndTime(segment.V2 * car.Vmax, car.Vmax, car.D)
 		totalTime += t
 		segDist -= d
 		totalTime += segDist / car.Vmax
@@ -75,8 +89,12 @@ func timeCar(track Track, car Car) float64 {
 	return totalTime
 }
 
-func race(track Track, cars []Car) string {
-	return fmt.Sprintf("%.2f", timeCar(track, cars[0]))
+func race(track Track, cars []Car) []Car {
+	for i, car := range cars {
+		cars[i].Time = timeCar(track, car)
+	}
+	sort.Sort(ByTime(cars))
+	return cars
 }
 
 func main() {
@@ -97,6 +115,7 @@ func main() {
 	track := parseTrack(lines[0])
 	cars := parseCars(lines[1:])
 
-	fmt.Println(race(track, cars))
-
+	for _, car := range race(track, cars) {
+		fmt.Println(car)
+	}
 }
