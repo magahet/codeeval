@@ -5,14 +5,12 @@ import (
 	"fmt"
 	"os"
 	"path"
-	"strconv"
-	"strings"
 )
 
-var a Matrix = Matrix{3, 4, "ABCESFCSADEE"}
+var A Matrix = Matrix{3, 4, "ABCESFCSADEE"}
 
 type Matrix struct {
-	M, N int
+	M, N  int
 	Value string
 }
 
@@ -23,6 +21,10 @@ func (a Matrix) Get(i, j int) rune {
 	return rune(a.Value[i*a.N+j])
 }
 
+func (a Matrix) Index(i, j int) int {
+	return i*a.N + j
+}
+
 func (a Matrix) String() string {
 	results := ""
 	for i := 0; i < a.M; i++ {
@@ -31,63 +33,45 @@ func (a Matrix) String() string {
 	return results
 }
 
-func (a Matrix) FindAll(s string, i, j int) <-chan []int {
-	c := make(chan []int)
-	go func() {
-		defer(close(c))
-		//
-		if i == -1 && j == -1 {
-		} else {
+func contains(s []int, e int) bool {
+	for _, a := range s {
+		if a == e {
+			return true
 		}
-	}()
-	return c
+	}
+	return false
 }
 
-func (a Matrix) CountAdjMines(i, j int) int {
-	c := 0
-	
-	//fmt.Println(i, j)
-	for di := -1; di <= 1; di++ {
-		for dj := -1; dj <= 1; dj++ {
-			if a.Get(i+di, j+dj) == '*' {
-				c++
-				//fmt.Println(i+di, j+dj, c)
+func (a Matrix) Contains(s string, p int, path []int) bool {
+	if len(s) == 0 {
+		return true
+	}
+	firstChar := rune(s[0])
+	newPath := append(path, p)
+	if p == -1 {
+		for i, char := range a.Value {
+			if char == firstChar && a.Contains(s[1:], i, newPath) {
+				return true
+			}
+		}
+	} else {
+		i := p / a.N
+		j := p % a.N
+		for _, d := range []int{-1, 1} {
+			if !contains(newPath, a.Index(i+d, j)) && a.Get(i+d, j) == firstChar && a.Contains(s[1:], a.Index(i+d, j), newPath) {
+				return true
+			}
+			if !contains(newPath, a.Index(i, j+d)) && a.Get(i, j+d) == firstChar && a.Contains(s[1:], a.Index(i, j+d), newPath) {
+				return true
 			}
 		}
 	}
-	
-	return c
+	return false
 }
 
-func printR(line string, m, n int) string {
-	results := ""
-	for i := 0; i < m; i++ {
-		results += line[i*n:i*n+n] + "\n"
-	}
-	return results
+func processLine(line string) bool {
+	return A.Contains(line, -1, []int{})
 }
-
-func processLine(line string) string {
-	parts := strings.Split(line, ";")
-	mn := strings.Split(parts[0], ",")
-	m, _ := strconv.Atoi(mn[0])
-	n, _ := strconv.Atoi(mn[1])
-	a := Matrix{m, n, parts[1]}
-	
-	result := ""
-	for i := 0; i < m; i++ {
-		for j := 0; j < n; j++ {
-			if a.Get(i, j) == '*' {
-				result += "*"
-			} else {
-				result += strconv.Itoa(a.CountAdjMines(i, j))
-			}
-		}
-	}
-	return result
-	//return printR(result, m, n)
-}
-
 
 func readLine(file *os.File) <-chan string {
 	out := make(chan string)
@@ -126,7 +110,11 @@ func main() {
 
 	for line := range readLine(file) {
 		if line != "" {
-			fmt.Println(processLine(line))
+			if processLine(line) {
+				fmt.Println("True")
+			} else {
+				fmt.Println("False")
+			}
 		}
 	}
 }
