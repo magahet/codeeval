@@ -5,19 +5,26 @@ import (
 	"fmt"
 	"os"
 	"path"
-	"regexp"
 	"strings"
 )
 
+func Count(line, sub string) int {
+	if len(sub) == 0 {
+		return 1
+	}
+	char := rune(sub[0])	
+	count := 0
+	for i, c := range line {
+		if c == char {
+			count += Count(line[i+1:], sub[1:])
+		}
+	}	
+	return count
+}
+
 func processLine(line string) int {
 	parts := strings.Split(line, ",")
-	chars := make([]string, len(parts[1]))
-	for i, char := range parts[1] {
-		chars[i] = string(char)
-	}
-	r := regexp.MustCompile(strings.Join(chars, `(.{0,1})`))
-	fmt.Println(r.FindAllStringSubmatch(parts[0], -1))
-	return len(r.FindAllStringSubmatch(parts[0], -1))
+	return Count(parts[0], parts[1])
 }
 
 func readLine(file *os.File) <-chan string {
