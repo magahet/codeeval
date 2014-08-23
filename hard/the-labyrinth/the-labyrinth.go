@@ -1,112 +1,116 @@
 package main
 
 import (
-	"bufio"
+    "io/ioutil"
 	"fmt"
 	"os"
 	"path"
 	"strings"
-    "strconv"
-    "sort"
 )
 
-func hammingDist(t1, t2 string) int {
-    d := len(t1)
-    for i := 0; i < len(t1); i++ {
-        if t1[i] == t2[i] {
-            d--
-        }
-    }
-    return d
+type Maze struct {
+    M, N int
+    Value string
 }
 
-func levenshteinDist(s, t string) int {
-    d := make([][]int, len(s)+1)
-    for i := range d {
-        d[i] = make([]int, len(t)+1)
+func (a *Maze) String() string {
+    result := ""
+    for i := 0; i < a.M; i++ {
+        result += a.Value[i*a.M:i*a.M+a.N] + "\n"
     }
-    for i := range d {
-        d[i][0] = i
-    }
-    for j := range d[0] {
-        d[0][j] = j
-    }
-    for j := 1; j <= len(t); j++ {
-        for i := 1; i <= len(s); i++ {
-            if s[i-1] == t[j-1] {
-                d[i][j] = d[i-1][j-1]
-            } else {
-                min := d[i-1][j]
-                if d[i][j-1] < min {
-                    min = d[i][j-1]
-                }
-                if d[i-1][j-1] < min {
-                    min = d[i-1][j-1]
-                }
-                d[i][j] = min + 1
-            }
-        }
-
-    }
-    return d[len(s)][len(t)]
+    return result
 }
 
-func processLine(line string) string {
-	parts := strings.Fields(line)
-    pattern := parts[0]
-    m, _ := strconv.Atoi(parts[1])
-    text := parts[2]
-    matches := make([][]string, m+1)
-    d := 0
-    if m == 0 {
-        for i := 0; i <= len(text) - len(pattern); i++ {
-            if text[i:i+len(pattern)] == pattern {
-                matches[d] = append(matches[d], pattern)
+func (a *Maze) Start() Point {
+    x := strings.Index(a.Value[:a.N], " ")
+    s := Point{x, 0, 0, 0, 0, nil}
+    h := getDist(s, a.End())
+    s.H = h
+    s.F = h
+    return s
+}
+
+func (a *Maze) End() Point {
+    i := strings.Index(a.Value[(a.M-1)*a.N:], " ")
+    return Point{a.M-1, i, 0, 0, 0, nil}
+}
+
+func getNeighborIndexies (i, m, n int) <-chan int {
+    out := make(chan int)
+    go func () {
+        defer close(out)
+        for d := -1; d <= 1; d += 2 {
+            for _, j := range []int{i+d, i+d*n} {
+                if j >= 0 && j < len(m*n) {
+                    out <- j
+                }
             }
         }
-    } else {
-        for i := 0; i <= len(text) - len(pattern); i++ {
-            //d = hammingDist(text[i:i+len(pattern)], pattern)
-            d = levenshteinDist(text[i:i+len(pattern)], pattern)
-            if d > m {
+    }()
+    return out
+}
+
+func (a *Maze) getAdjecent(p *Point) <- chan Point {
+    out := make(chan Point)
+    go func() {
+        defer close(out)
+        i := p.Y * a.N + p.X
+        var nP Point
+        for j := range getNeighborIndexies(i, a.M, a.N) {
+            if a.Value[i+di] == uint8('*') {
                 continue
             }
-            matches[d] = append(matches[d], text[i:i+len(pattern)])
+            nP = Point{(j)%a.N, j/a.N, 0, 0, 0, p}
+            nP.H = getDist(nP, a.End())
+            nP.G = p.G + 1
+            nP.F = nP.H + nP.G
+            out <- nP
         }
-    }
-    result := ""
-    for _, m := range matches {
-        if len(m) == 0 {
-            continue
-        }
-        sort.Strings(m)
-        result += strings.Join(m, " ") + " "
-    }
-    if len(result) == 0 {
-        return "No match"
-    }
-    return strings.Trim(result, " ")
+    }()
+    return out
 }
 
-func readLine(file *os.File) <-chan string {
-	out := make(chan string)
-	go func() {
-		in := bufio.NewReader(file)
-		linePartial := ""
-		for {
-			bytes, isPrefix, err := in.ReadLine()
-			if err != nil {
-				break
-			} else if isPrefix {
-				linePartial += string(bytes)
-			} else {
-				out <- linePartial + string(bytes)
-				linePartial = ""
-			}
+func Abs(i int) int {
+    if i < 0 {
+        return -i
+    }
+    return i
+}
+
+func getDist(p1, p2 Point) int {
+    return Abs(p1.X - p2.X) + Abs(p1.Y - p2.Y)
+}
+
+func NewMaze(file string) Maze {
+    rows := strings.Count(file, "\n") + 1
+    cols := strings.Index(file, "\n")
+    return Maze{rows, cols, strings.Replace(file, "\n", "", -1)}
+}
+
+type Point struct {
+    X, Y, F, G, H int
+    Parent *Point
+}
+
+func getMinF(list []Point) Point {
+	index := 0
+	for i, p := range list {
+		if (i > 0) && (p.F <= list[index].F) {
+			index = i
 		}
-		close(out)
-	}()
-	return out
+	}
+	return list[index]
+}
+
+func getPath(a Maze) []Point {
+    open := []Point{a.Start()}
+    var current Point
+    for len(open) > 0 {
+        current = getMinF(open)
+        for _, p := a.getAdjecent(&current) {
+            open = append(open, p)
+        }
+    }
 }
 
 func main() {
@@ -114,19 +118,15 @@ func main() {
 		fmt.Println("usage:", path.Base(os.Args[0]), "file")
 		os.Exit(1)
 	}
-
-	file, err := os.Open(os.Args[1])
-	defer file.Close()
-
+	
+	file, err := ioutil.ReadFile(os.Args[1])
 	if err != nil {
 		fmt.Println("error opening file", os.Args[1], ":", err)
 		os.Exit(1)
 	}
-
-	for line := range readLine(file) {
-		if line != "" {
-            fmt.Println(processLine(line))
-			//processLine(line)
-		}
-	}
+	
+	maze := NewMaze(string(file))
+	//fmt.Println(maze.Start(), maze.End())
+	path := findPath(maze)
+	fmt.Println(path)
 }
