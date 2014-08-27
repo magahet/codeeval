@@ -5,59 +5,37 @@ import (
 	"fmt"
 	"os"
 	"path"
-	"strconv"
 	"strings"
 )
 
-func getSubRanges(s, e int) <-chan []int {
-	out := make(chan []int)
+func getSubStrings(s string) <-chan string {
+	out := make(chan string)
 	go func() {
 		defer close(out)
-		for i := s; i <= e; i++ {
-			for j := i; j <= e; j++ {
-				subRange := make([]int, j-i+1)
-				for k := 0; k <= j-i; k++ {
-					subRange[k] = i + k
+		for l := len(s) / 2; l > 0; l-- {
+			seen := make(map[string]bool)
+			for i := 0; i < len(s)-l; i++ {
+				if strings.Count(s[i:i+l], " ") == l {
+					continue
 				}
-				out <- subRange
+				if _, exists := seen[s[i:i+l]]; !exists {
+					out <- s[i : i+l]
+					seen[s[i:i+l]] = true
+				}
 			}
 		}
 	}()
 	return out
 }
 
-func isPalindrome(n int) bool {
-	s := strconv.Itoa(n)
-	for i := 0; i <= len(s)/2; i++ {
-		if s[i] != s[len(s)-1-i] {
-			return false
+func processLine(line string) string {
+	for s := range getSubStrings(line) {
+		if strings.Count(line, s) > 1 {
+			return s
 		}
 	}
-	return true
-}
 
-func countPalindromes(subRange []int) int {
-	count := 0
-	for _, i := range subRange {
-		if isPalindrome(i) {
-			count++
-		}
-	}
-	return count
-}
-
-func processLine(line string) int {
-	parts := strings.Fields(line)
-	s, _ := strconv.Atoi(parts[0])
-	e, _ := strconv.Atoi(parts[1])
-	//fmt.Println(s, e)
-	count := 0
-	for subRange := range getSubRanges(s, e) {
-		if countPalindromes(subRange)%2 == 0 {
-			count++
-		}
-	}
-	return count
+	return "NONE"
 }
 
 func readLine(file *os.File) <-chan string {
